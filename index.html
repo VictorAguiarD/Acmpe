@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acampamento Paraíso - Sistema de Vendas</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <i class="bi bi-shop"></i>
+                    <h2>Acampamento Paraíso</h2>
+                </div>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" onclick="showPage('home')" class="nav-link active"><i class="bi bi-house-door"></i> Home</a></li>
+                <li><a href="#" onclick="showPage('pdv')" class="nav-link"><i class="bi bi-cash-coin"></i> PDV</a></li>
+                <li><a href="#" onclick="showPage('clientes')" class="nav-link"><i class="bi bi-people"></i> Clientes</a></li>
+                <li><a href="#" onclick="showPage('estoque')" class="nav-link"><i class="bi bi-box"></i> Estoque</a></li>
+                <li><a href="#" onclick="showPage('relatorios')" class="nav-link"><i class="bi bi-graph-up"></i> Relatórios</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <button class="menu-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="header-title">
+                    <h1 id="pageTitle">Home</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-logout" onclick="logout()">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </button>
+                </div>
+            </header>
+
+            <!-- Pages Container -->
+            <div class="pages-container">
+                <!-- Home Page -->
+                <div id="home" class="page active">
+                    <div class="welcome-section">
+                        <h1>Bem-vindo ao Sistema</h1>
+                        <p>Escolha um módulo para começar a gerenciar suas vendas, clientes e estoque de forma rápida e eficiente.</p>
+                    </div>
+                    <div class="menu-cards-home">
+                        <div class="menu-card-home menu-card-pdv" onclick="showPage('pdv')">
+                            <div class="card-border-top"></div>
+                            <i class="bi bi-cash-coin"></i>
+                            <h3>PDV</h3>
+                            <p>Ponto de Venda</p>
+                        </div>
+                        <div class="menu-card-home menu-card-clientes" onclick="showPage('clientes')">
+                            <div class="card-border-top"></div>
+                            <i class="bi bi-people"></i>
+                            <h3>Clientes</h3>
+                            <p>Gestão de Clientes</p>
+                        </div>
+                        <div class="menu-card-home menu-card-estoque" onclick="showPage('estoque')">
+                            <div class="card-border-top"></div>
+                            <i class="bi bi-box"></i>
+                            <h3>Estoque</h3>
+                            <p>Controle de Estoque</p>
+                        </div>
+                        <div class="menu-card-home menu-card-relatorios" onclick="showPage('relatorios')">
+                            <div class="card-border-top"></div>
+                            <i class="bi bi-graph-up"></i>
+                            <h3>Relatórios</h3>
+                            <p>Vendas e Análises</p>
+                        </div>
+                        <div class="menu-card-home menu-card-config" onclick="alert('Configurações em desenvolvimento')">
+                            <div class="card-border-top"></div>
+                            <i class="bi bi-gear"></i>
+                            <h3>Configurações</h3>
+                            <p>Ajustes do Sistema</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDV Page -->
+                <div id="pdv" class="page">
+                    <div class="pdv-container">
+                        <div class="pdv-products">
+                            <h2>Produtos</h2>
+                            <div class="products-grid" id="productsGrid"></div>
+                        </div>
+                        <div class="pdv-cart">
+                            <h2>Carrinho</h2>
+                            
+                            <!-- Client Selection -->
+                            <div class="client-selection">
+                                <label>Selecionar Cliente</label>
+                                <select id="clientSelect" onchange="updateClientInfo()">
+                                    <option value="">Venda sem cliente</option>
+                                </select>
+                                <div id="clientInfo" class="client-info" style="display: none;"></div>
+                            </div>
+
+                            <div class="cart-items" id="cartItems"></div>
+                            
+                            <div class="cart-total">
+                                <div class="total-row">
+                                    <span>Subtotal:</span>
+                                    <span id="subtotal">R$ 0,00</span>
+                                </div>
+                                <div class="total-amount">
+                                    <span>Total</span>
+                                    <h3 id="total">R$ 0,00</h3>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="payment-method">
+                                <label>Forma de Pagamento</label>
+                                <div class="payment-options">
+                                    <label class="payment-option">
+                                        <input type="radio" name="payment" value="dinheiro" checked onchange="updatePaymentMethod()">
+                                        <span>Dinheiro</span>
+                                    </label>
+                                    <label class="payment-option">
+                                        <input type="radio" name="payment" value="cartao" onchange="updatePaymentMethod()">
+                                        <span>Cartão</span>
+                                    </label>
+                                    <label class="payment-option">
+                                        <input type="radio" name="payment" value="fiado" onchange="updatePaymentMethod()">
+                                        <span>Fiado</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button class="btn-checkout" onclick="checkout()">
+                                <i class="bi bi-check-circle"></i> Finalizar Venda
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clientes Page -->
+                <div id="clientes" class="page">
+                    <div class="page-header">
+                        <input type="text" id="searchClientes" placeholder="Buscar cliente..." onkeyup="filterClientes()">
+                        <button class="btn-primary" onclick="openClientForm()">
+                            <i class="bi bi-plus"></i> Novo Cliente
+                        </button>
+                    </div>
+
+                    <!-- Client Form Modal -->
+                    <div id="clientFormModal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <span class="close" onclick="closeClientForm()">&times;</span>
+                            <h2>Adicionar Cliente</h2>
+                            <form onsubmit="saveClient(event)">
+                                <input type="text" id="clientNome" placeholder="Nome completo" required>
+                                <input type="email" id="clientEmail" placeholder="E-mail" required>
+                                <input type="tel" id="clientTelefone" placeholder="Telefone" required>
+                                <select id="clientTipo" required onchange="updateDepositoField()">
+                                    <option value="">Selecione o tipo</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="fiado">Fiado</option>
+                                    <option value="prepago">Pré-Pago</option>
+                                </select>
+                                <input type="number" id="clientDeposito" placeholder="Depósito inicial (R$)" step="0.01" min="0" style="display: none;">
+                                <button type="submit" class="btn-primary">Salvar Cliente</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="clientesTable">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>E-mail</th>
+                                    <th>Telefone</th>
+                                    <th>Tipo</th>
+                                    <th>Saldo</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientesList"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Estoque Page -->
+                <div id="estoque" class="page">
+                    <div class="page-header">
+                        <input type="text" id="searchEstoque" placeholder="Buscar produto..." onkeyup="filterEstoque()">
+                        <button class="btn-primary" onclick="openProductForm()">
+                            <i class="bi bi-plus"></i> Novo Produto
+                        </button>
+                    </div>
+
+                    <!-- Product Form Modal -->
+                    <div id="productFormModal" class="modal" style="display: none;">
+                        <div class="modal-content">
+                            <span class="close" onclick="closeProductForm()">&times;</span>
+                            <h2>Adicionar Produto</h2>
+                            <form onsubmit="saveProduct(event)">
+                                <input type="text" id="productNome" placeholder="Nome do produto" required>
+                                <input type="text" id="productCategoria" placeholder="Categoria" required>
+                                <input type="number" id="productQuantidade" placeholder="Quantidade" required min="0">
+                                <input type="number" id="productPreco" placeholder="Preço (R$)" step="0.01" required min="0">
+                                <input type="number" id="productEstoqueMinimo" placeholder="Estoque mínimo" required min="0">
+                                <button type="submit" class="btn-primary">Salvar Produto</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="estoqueTable">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Categoria</th>
+                                    <th>Quantidade</th>
+                                    <th>Preço</th>
+                                    <th>Valor Total</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="estoqueList"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Relatórios Page -->
+                <div id="relatorios" class="page">
+                    <div class="relatorios-header">
+                        <div class="relatorios-title">
+                            <i class="bi bi-graph-up"></i>
+                            <div>
+                                <h1>Relatórios e Análises</h1>
+                                <p>Dashboard de vendas e desempenho</p>
+                            </div>
+                        </div>
+                        <div class="relatorios-controls">
+                            <select id="periodSelect" class="period-select">
+                                <option value="today">Hoje</option>
+                                <option value="week" selected>Esta Semana</option>
+                                <option value="month">Este Mês</option>
+                                <option value="quarter">Este Trimestre</option>
+                                <option value="year">Este Ano</option>
+                            </select>
+                            <button class="btn-export" onclick="exportPDF()">
+                                <i class="bi bi-download"></i> Exportar PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- KPI Cards -->
+                    <div class="kpi-cards-relatorios">
+                        <div class="kpi-card-rel">
+                            <div class="kpi-icon">📈</div>
+                            <div class="kpi-change">+12.5%</div>
+                            <p class="kpi-label">Faturamento Total</p>
+                            <h3 class="kpi-value" id="relFaturamento">R$ 0,00</h3>
+                        </div>
+                        <div class="kpi-card-rel">
+                            <div class="kpi-icon">💰</div>
+                            <div class="kpi-change">+8.2%</div>
+                            <p class="kpi-label">Lucro Líquido</p>
+                            <h3 class="kpi-value" id="relLucro">R$ 0,00</h3>
+                        </div>
+                        <div class="kpi-card-rel">
+                            <div class="kpi-icon">🛒</div>
+                            <div class="kpi-change">+5.3%</div>
+                            <p class="kpi-label">Ticket Médio</p>
+                            <h3 class="kpi-value" id="relTicket">R$ 0,00</h3>
+                        </div>
+                        <div class="kpi-card-rel">
+                            <div class="kpi-icon">💳</div>
+                            <div class="kpi-change">+15.2%</div>
+                            <p class="kpi-label">Transações</p>
+                            <h3 class="kpi-value" id="relTransacoes">0</h3>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="charts-section">
+                        <div class="chart-container">
+                            <h2>Vendas por Período</h2>
+                            <p class="chart-subtitle">Evolução de vendas nos últimos dias</p>
+                            <div class="chart-placeholder" id="chartVendas">
+                                <p>Gráfico de vendas por período</p>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h2>Formas de Pagamento</h2>
+                            <p class="chart-subtitle">Distribuição de vendas</p>
+                            <div class="chart-placeholder" id="chartPagamento">
+                                <p>Gráfico de formas de pagamento</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Table -->
+                    <div class="products-table-section">
+                        <h2>Produtos Mais Vendidos</h2>
+                        <p class="chart-subtitle">Top 5 produtos por quantidade e faturamento</p>
+                        <div class="table-container">
+                            <table id="produtosVendidosTable">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Quantidade</th>
+                                        <th>Faturamento</th>
+                                        <th>Ticket Médio</th>
+                                        <th>% do Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="produtosVendidosList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Vendas History -->
+                    <div class="vendas-history-section">
+                        <h2>Histórico de Vendas</h2>
+                        <div class="table-container">
+                            <table id="vendasTable">
+                                <thead>
+                                    <tr>
+                                        <th>Data/Hora</th>
+                                        <th>Cliente</th>
+                                        <th>Produtos</th>
+                                        <th>Valor</th>
+                                        <th>Pagamento</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vendasList"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>© 2025 Acampamento Paraíso - Sistema de Vendas</footer>
+    <script src="app.js"></script>
+</body>
+</html>

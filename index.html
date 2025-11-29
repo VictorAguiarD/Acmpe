@@ -93,7 +93,7 @@ Error generating stack: `+l.message+`
                 <li><a href="#" onclick="showPage('relatorios')" class="nav-link"><i class="bi bi-graph-up"></i> Relatórios</a></li>
             </ul>
         </nav>
-
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
         <!-- Main Content -->
         <div class="main-content">
             <!-- Header -->
@@ -230,6 +230,7 @@ Error generating stack: `+l.message+`
                                 <input type="email" id="clientEmail" placeholder="E-mail (opcional)">
                                 <input type="tel" id="clientTelefone" placeholder="Telefone (opcional)">
                                 <input type="text" id="clientResponsavel" placeholder="Responsável (opcional)">
+                                <input type="text" id="clientResp" placeholder="Responsável (opcional)">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="clientAcampante">
                                     <span>É acampante?</span>
@@ -281,7 +282,7 @@ Error generating stack: `+l.message+`
                             <h2 id="productFormTitle">Adicionar Produto</h2>
                             <form onsubmit="saveProduct(event)">
                                 <input type="text" id="productNome" placeholder="Nome do produto" required>
-                                <input type="text" id="productCategoria" placeholder="Categoria" required>
+                                    
                                 <input type="number" id="productQuantidade" placeholder="Quantidade" required min="0">
                                 <input type="number" id="productPreco" placeholder="Preço (R$)" step="0.01" required min="0">
                                 <input type="number" id="productEstoqueMinimo" placeholder="Estoque mínimo" required min="0">
@@ -289,7 +290,7 @@ Error generating stack: `+l.message+`
                             </form>
                         </div>
                     </div>
-
+                        
                     <div class="table-container">
                         <table id="estoqueTable">
                             <thead>
@@ -433,6 +434,29 @@ Error generating stack: `+l.message+`
             </div>
         </div>
     </div>
+    <!-- MODAL PAGAMENTO DE FIADO (PADRONIZADO) -->
+<div id="modalPagamentoFiado" class="modal" style="display:none;">
+    <div class="modal-content">
+
+        <span class="close" onclick="fecharPagamentoFiado()">&times;</span>
+
+        <h2 style="margin-bottom: 15px;">Pagamento de Fiado</h2>
+
+        <p id="textoSaldoFiado" style="margin-bottom: 20px; font-size: 14px;"></p>
+
+        <label style="font-size: 13px;">Valor a pagar:</label>
+        <input type="number" 
+               step="0.01" 
+               id="valorPagamentoFiado" 
+               placeholder="Ex: 10.00" 
+               style="margin-bottom: 20px;">
+
+        <button class="btn-primary" onclick="confirmarPagamentoFiado()">
+            Confirmar Pagamento
+        </button>
+
+    </div>
+</div>
 
     <footer>© 2025 Acampamento Paraíso - Sistema de Vendas</footer>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

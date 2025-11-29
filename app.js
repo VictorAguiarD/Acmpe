@@ -135,8 +135,35 @@ function showPage(pageName) {
 }
 
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('hidden');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    const isOpen = sidebar.classList.toggle('show');
+    overlay.style.display = isOpen ? 'block' : 'none';
 }
+
+// Fechar ao clicar no overlay
+document.getElementById('sidebarOverlay').addEventListener('click', () => {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
+    sidebar.classList.remove('show');
+    overlay.style.display = 'none';
+});
+
+// Fechar ao clicar em qualquer item do menu
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        sidebar.classList.remove('show');
+        overlay.style.display = 'none';
+    });
+});
+
+
+
 
 // ==================== HOME PAGE ====================
 function updateKPIs() {
@@ -176,6 +203,11 @@ function renderClientesTable(clientes) {
         const row = document.createElement('tr');
         const tipoBadge = getClientTypeBadge(cliente.tipo);
         const acampanteText = cliente.acampante ? 'Sim' : 'Não';
+
+        const saldoExibido = cliente.tipo === 'fiado'
+            ? `- R$ ${cliente.saldo.toFixed(2)}`
+            : `R$ ${cliente.saldo.toFixed(2)}`;
+
         row.innerHTML = `
             <td>${cliente.nome}</td>
             <td>${cliente.email || '-'}</td>
@@ -183,18 +215,76 @@ function renderClientesTable(clientes) {
             <td>${cliente.responsavel || '-'}</td>
             <td>${acampanteText}</td>
             <td><span class="client-type ${cliente.tipo}">${tipoBadge}</span></td>
-            <td>R$ ${cliente.saldo.toFixed(2)}</td>
+            <td>${saldoExibido}</td>
             <td>
                 <button class="btn-edit" onclick="editCliente('${cliente.id}')">
                     <i class="bi bi-pencil"></i> Editar
                 </button>
+
                 <button class="btn-delete" onclick="deleteClienteConfirm('${cliente.id}')">
                     <i class="bi bi-trash"></i> Deletar
                 </button>
+
+                ${cliente.tipo === 'fiado' && cliente.saldo > 0 ? `
+                    <button class="btn-pay" onclick="abrirPagamentoFiado('${cliente.id}')">
+                        <i class="bi bi-cash"></i> Quitar
+                    </button>
+                ` : ''}
             </td>
         `;
         tbody.appendChild(row);
     });
+}
+
+let clienteFiadoAtual = null;
+
+function abrirPagamentoFiado(id) {
+    const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
+    clienteFiadoAtual = clientes.find(c => c.id === id);
+
+    if (!clienteFiadoAtual) return;
+
+    document.getElementById('textoSaldoFiado').innerText = 
+        `Saldo atual: R$ ${clienteFiadoAtual.saldo.toFixed(2)}`;
+
+    document.getElementById('valorPagamentoFiado').value = '';
+    document.getElementById('modalPagamentoFiado').style.display = 'block';
+}
+
+function fecharPagamentoFiado() {
+    document.getElementById('modalPagamentoFiado').style.display = 'none';
+    clienteFiadoAtual = null;
+}
+
+function confirmarPagamentoFiado() {
+    let valor = parseFloat(document.getElementById('valorPagamentoFiado').value);
+
+    if (isNaN(valor) || valor <= 0) {
+        showNotification('error', 'Informe um valor válido!', 'Erro');
+        return;
+    }
+
+    let clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
+    const index = clientes.findIndex(c => c.id === clienteFiadoAtual.id);
+
+    if (index === -1) return;
+
+    if (valor > clientes[index].saldo) {
+        showNotification('error', 'O valor excede o saldo devedor!', 'Erro');
+        return;
+    }
+
+    clientes[index].saldo -= valor;
+
+    if (clientes[index].saldo < 0) clientes[index].saldo = 0;
+
+    localStorage.setItem(STORAGE_KEYS.CLIENTES, JSON.stringify(clientes));
+
+    fecharPagamentoFiado();
+    loadClientes();
+    loadClientsForPDV();
+
+    showNotification('success', 'Pagamento registrado com sucesso!', 'Sucesso');
 }
 
 function getClientTypeBadge(tipo) {
@@ -619,7 +709,7 @@ function updatePaymentMethod() {
 
 function checkout() {
     const carrinho = JSON.parse(localStorage.getItem(STORAGE_KEYS.CARRINHO)) || [];
-    
+
     if (carrinho.length === 0) {
         showNotification('error', 'Carrinho vazio! Adicione produtos antes de finalizar.', 'Erro');
         return;
@@ -630,23 +720,26 @@ function checkout() {
     const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
     const clienteInfo = clientId ? clientes.find(c => c.id === clientId) : null;
 
+    // --- CALCULAR TOTAL ---
     let total = 0;
     carrinho.forEach(item => {
         total += item.preco * item.quantidade;
     });
 
-    // Validações
+    // --- VALIDAÇÃO PRÉ-PAGO ---
     if (clienteInfo && clienteInfo.tipo === 'prepago' && clienteInfo.saldo < total) {
         showNotification('error', 'Saldo insuficiente para esta transação!', 'Erro');
         return;
     }
 
+    // --- CRIAÇÃO DA VENDA ---
     const vendas = JSON.parse(localStorage.getItem(STORAGE_KEYS.VENDAS)) || [];
     const now = new Date();
+
     const novaVenda = {
         id: Date.now().toString(),
-        data: now.getTime(), // Timestamp para cálculos
-        dataFormatada: now.toLocaleString('pt-BR'), // Para exibição
+        data: now.getTime(),
+        dataFormatada: now.toLocaleString('pt-BR'),
         cliente: clienteInfo ? clienteInfo.nome : 'Não informado',
         clienteId: clientId || null,
         clienteTipo: clienteInfo ? clienteInfo.tipo : null,
@@ -658,38 +751,58 @@ function checkout() {
     vendas.push(novaVenda);
     localStorage.setItem(STORAGE_KEYS.VENDAS, JSON.stringify(vendas));
 
-    // Atualizar estoque - diminuir quantidade de produtos vendidos
+    // --- ATUALIZAR ESTOQUE ---
     let produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
+
     carrinho.forEach(itemCarrinho => {
         const produtoIndex = produtos.findIndex(p => p.id === itemCarrinho.id);
         if (produtoIndex !== -1) {
             produtos[produtoIndex].quantidade -= itemCarrinho.quantidade;
+
+            // Evitar estoque negativo
+            if (produtos[produtoIndex].quantidade < 0) {
+                produtos[produtoIndex].quantidade = 0;
+            }
         }
     });
+
     localStorage.setItem(STORAGE_KEYS.PRODUTOS, JSON.stringify(produtos));
 
+    // --- ATUALIZAR SALDO DO CLIENTE ---
     if (clienteInfo) {
         let clientesAtualizado = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
         const clienteIndex = clientesAtualizado.findIndex(c => c.id === clienteInfo.id);
+
         if (clienteIndex !== -1) {
             if (clienteInfo.tipo === 'prepago') {
                 clientesAtualizado[clienteIndex].saldo -= total;
             } else if (clienteInfo.tipo === 'fiado') {
                 clientesAtualizado[clienteIndex].saldo += total;
             }
+
             localStorage.setItem(STORAGE_KEYS.CLIENTES, JSON.stringify(clientesAtualizado));
-            loadClientsForPDV();
         }
     }
 
+    // --- LIMPAR CARRINHO ---
     localStorage.setItem(STORAGE_KEYS.CARRINHO, JSON.stringify([]));
     document.getElementById('clientSelect').value = '';
     updateClientInfo();
+
+    // --- RECARREGAR TELAS ---
     loadCartUI();
+    loadClientes();
+    loadClientsForPDV();
+    loadProdutos();
+    renderEstoqueTable(JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)));
+
+    // --- KPI HOME ---
     updateKPIs();
 
+    // --- FINALIZAÇÃO ---
     showNotification('success', 'Venda finalizada com sucesso!', 'Sucesso');
 }
+
 
 // ==================== RELATÓRIOS ====================
 function loadVendas() {

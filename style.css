@@ -164,7 +164,15 @@ body {
     border-color: var(--danger-color);
     color: white;
 }
-
+.btn-pay{
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    background-color: rgb(248, 248, 248);
+}
 /* Pages Container */
 .pages-container {
     flex: 1;
@@ -1097,88 +1105,175 @@ footer {
     margin-top: 40px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-        transform: none;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
+
+
+.modal-content {
+    width: 90%;
+    max-width: 480px;
+    padding: 25px;
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        width: 92%;
+        padding: 20px;
+        border-radius: 10px;
     }
 
-    .sidebar.hidden {
-        transform: none;
-        display: none;
+    .modal-content h2,
+    .modal-content h3 {
+        font-size: 18px;
     }
 
-    .main-content {
-        margin-left: 0;
+    .modal-content input {
+        font-size: 14px;
     }
+}
 
-    .menu-toggle {
-        display: block;
-    }
+/* ---------- PDV RESPONSIVO SÊNIOR ---------- */
 
+@media (max-width: 1024px) {
     .pdv-container {
         grid-template-columns: 1fr;
-    }
-
-    .pdv-cart {
-        position: static;
+        gap: 20px;
     }
 
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    }
-
-    .page-header {
-        flex-direction: column;
-    }
-
-    .menu-cards-home {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .charts-section {
-        grid-template-columns: 1fr;
-    }
-
-    .relatorios-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .relatorios-controls {
-        width: 100%;
-        flex-direction: column;
-    }
-
-    .period-select,
-    .btn-export {
-        width: 100%;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     }
 }
 
 @media (max-width: 480px) {
-    .pages-container {
-        padding: 15px;
-    }
-
-    .menu-cards-home {
-        grid-template-columns: 1fr;
-    }
-
     .products-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
     }
 
-    .kpi-cards-relatorios {
-        grid-template-columns: 1fr;
+    .product-btn {
+        padding: 10px;
     }
 
-    .welcome-section h1 {
-        font-size: 24px;
+    .product-btn h4 {
+        font-size: 10px;
+    }
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    min-width: 650px; /* garante responsividade sem quebrar */
+}
+
+/* ---------- HOME CARDS RESPONSIVO ---------- */
+
+@media (max-width: 600px) {
+    .menu-cards-home {
+        grid-template-columns: repeat(1, 1fr) !important;
+    }
+
+    .menu-card-home {
+        padding: 30px 20px;
+    }
+
+    .menu-card-home i {
+        font-size: 40px;
+    }
+}
+
+/* ---------- HEADER RESPONSIVO SÊNIOR ---------- */
+
+@media (max-width: 768px) {
+    .header {
+        padding: 15px 20px;
+    }
+
+    .header-title h1 {
+        font-size: 18px;
+    }
+
+    .btn-logout {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+}
+
+/* ---------- GLOBAL MICROTELAS ---------- */
+
+@media (max-width: 380px) {
+    .pages-container {
+        padding: 10px;
+    }
+
+    input, select, button {
+        font-size: 14px !important;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+}
+/* ---------- SIDEBAR RESPONSIVO SÊNIOR (OBRIGATÓRIO) ---------- */
+
+@media (max-width: 1024px) {
+
+    .sidebar {
+        width: 230px;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 9999;
+        border-right: none;
+        border-bottom: none;
+    }
+
+    /* Quando ativada via JS: sidebar aparece */
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    /* Conteúdo principal ocupa 100% */
+    .main-content {
+        margin-left: 0 !important;
+    }
+
+    /* Ícone do menu aparece */
+    .menu-toggle {
+        display: block !important;
+    }
+}
+/* Overlay da Sidebar (para mobile) */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.55);
+    z-index: 9998;
+}
+
+/* ---------- OVERLAY DA SIDEBAR ---------- */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.55);
+    z-index: 999;
+}
+
+/* quando a sidebar estiver ativa no mobile */
+@media (max-width: 1024px) {
+    .sidebar.show + .sidebar-overlay {
+        display: block;
     }
 }

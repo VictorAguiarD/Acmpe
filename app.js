@@ -300,7 +300,6 @@ function openClientForm() {
     currentEditingClientId = null;
     document.getElementById('clientFormTitle').textContent = 'Adicionar Cliente';
     document.getElementById('clientNome').value = '';
-    document.getElementById('clientEmail').value = '';
     document.getElementById('clientTelefone').value = '';
     document.getElementById('clientResponsavel').value = '';
     document.getElementById('clientAcampante').checked = false;

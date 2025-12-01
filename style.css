@@ -256,6 +256,27 @@ body {
 .menu-card-pdv .card-border-top {
     background: linear-gradient(90deg, #3b82f6 0%, #1e40af 100%);
 }
+.cliente-filtros {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.cliente-filtros label {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.cliente-filtros select {
+    padding: 8px 12px;
+    background-color: #0f172a;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
 
 .menu-card-clientes {
     border-color: #f59e0b;

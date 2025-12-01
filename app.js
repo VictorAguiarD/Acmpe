@@ -326,7 +326,7 @@ function editCliente(id) {
     currentEditingClientId = id;
     document.getElementById('clientFormTitle').textContent = 'Editar Cliente';
     document.getElementById('clientNome').value = cliente.nome;
-    document.getElementById('clientEmail').value = cliente.email || '';
+    
     document.getElementById('clientTelefone').value = cliente.telefone;
     document.getElementById('clientResponsavel').value = cliente.responsavel || '';
     document.getElementById('clientAcampante').checked = cliente.acampante || false;

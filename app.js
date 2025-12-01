@@ -460,16 +460,30 @@ function renderEstoqueTable(produtos) {
     });
 }
 
-function openProductForm() {
-    currentEditingProductId = null;
-    document.getElementById('productFormTitle').textContent = 'Adicionar Produto';
-    document.getElementById('productNome').value = '';
-    document.getElementById('productCategoria').value = '';
-    document.getElementById('productQuantidade').value = '';
-    document.getElementById('productPreco').value = '';
-    document.getElementById('productEstoqueMinimo').value = '';
+function openProductForm(id = null) {
+    currentEditingProductId = id;
+
     document.getElementById('productFormModal').style.display = 'flex';
+
+    if (id) {
+        const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
+        const produto = produtos.find(p => p.id === id);
+
+        document.getElementById('productFormTitle').textContent = 'Editar Produto';
+        document.getElementById('productNome').value = produto.nome;
+        document.getElementById('productQuantidade').value = produto.quantidade;
+        document.getElementById('productPreco').value = produto.preco;
+        document.getElementById('productEstoqueMinimo').value = produto.estoqueMinimo;
+
+    } else {
+        document.getElementById('productFormTitle').textContent = 'Adicionar Produto';
+        document.getElementById('productNome').value = '';
+        document.getElementById('productQuantidade').value = '';
+        document.getElementById('productPreco').value = '';
+        document.getElementById('productEstoqueMinimo').value = '';
+    }
 }
+
 
 function closeProductForm() {
     document.getElementById('productFormModal').style.display = 'none';
@@ -502,7 +516,6 @@ function saveProduct(event) {
     
     const productData = {
         nome: document.getElementById('productNome').value,
-        categoria: document.getElementById('productCategoria').value,
         quantidade: parseInt(document.getElementById('productQuantidade').value),
         preco: parseFloat(document.getElementById('productPreco').value),
         estoque_minimo: parseInt(document.getElementById('productEstoqueMinimo').value)

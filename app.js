@@ -596,6 +596,20 @@ function loadProductsForPDV() {
     });
 }
 
+function filtrarClientes() {
+    const filtro = document.getElementById('filtroClientes').value;
+    const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
+
+    let clientesFiltrados = clientes;
+
+    if (filtro !== 'todos') {
+        clientesFiltrados = clientes.filter(c => c.tipo === filtro);
+    }
+
+    renderClientesTable(clientesFiltrados);
+}
+
+
 function loadClientsForPDV() {
     const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
     const select = document.getElementById('clientSelect');

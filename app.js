@@ -483,6 +483,42 @@ function openProductForm(id = null) {
     }
 }
 
+function exportarProdutos() {
+  const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
+  const blob = new Blob([JSON.stringify(produtos, null, 2)], { type: 'application/json' });
+
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'produtos.json';
+  link.click();
+}
+
+function importarProdutos(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const dados = JSON.parse(e.target.result);
+
+      if (!Array.isArray(dados)) {
+        showNotification('error', 'Arquivo inválido', 'Erro');
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEYS.PRODUTOS, JSON.stringify(dados));
+      loadProdutos();
+      loadProductsForPDV();
+      showNotification('success', 'Produtos importados com sucesso!', 'Sucesso');
+    } catch {
+      showNotification('error', 'Erro ao importar arquivo', 'Erro');
+    }
+  };
+
+  reader.readAsText(file);
+}
+
 
 function closeProductForm() {
     document.getElementById('productFormModal').style.display = 'none';

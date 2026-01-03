@@ -280,11 +280,34 @@ Error generating stack: `+l.message+`
                 <!-- Estoque Page -->
                 <div id="estoque" class="page">
                     <div class="page-header">
-                        <input type="text" id="searchEstoque" placeholder="Buscar produto..." onkeyup="filterEstoque()">
-                        <button class="btn-primary" onclick="openProductForm()">
-                            <i class="bi bi-plus"></i> Novo Produto
-                        </button>
-                    </div>
+  <input
+    type="text"
+    id="searchEstoque"
+    placeholder="Buscar produto..."
+    onkeyup="filterEstoque()"
+  >
+
+  <div style="display: flex; gap: 10px;">
+    <button class="btn-primary" onclick="openProductForm()">
+      <i class="bi bi-plus"></i> Novo Produto
+    </button>
+
+    <button class="btn-secondary" onclick="exportarProdutos()">
+      <i class="bi bi-download"></i> Exportar
+    </button>
+
+    <label class="btn-secondary" style="cursor: pointer;">
+      <i class="bi bi-upload"></i> Importar
+      <input
+        type="file"
+        accept=".json"
+        onchange="importarProdutos(event)"
+        style="display: none;"
+      >
+    </label>
+  </div>
+</div>
+
 
                     <!-- Product Form Modal -->
                     <div id="productFormModal" class="modal" style="display: none;">

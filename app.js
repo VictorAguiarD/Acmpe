@@ -12,11 +12,26 @@ let currentEditingProductId = null;
 let pendingAction = null;
 
 // ==================== INICIALIZAÇÃO ====================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
     loadClientes();
     loadProdutos();
     loadVendas();
+    // Enforce mutual exclusivity
+    document.getElementById('clientAcampante').addEventListener('change', function () {
+        if (this.checked) {
+            document.getElementById('clientEquipante').checked = false;
+        }
+        toggleClientFields();
+    });
+
+    document.getElementById('clientEquipante').addEventListener('change', function () {
+        if (this.checked) {
+            document.getElementById('clientAcampante').checked = false;
+        }
+        toggleClientFields();
+    });
+
     showPage('home');
 });
 
@@ -168,7 +183,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
 // ==================== HOME PAGE ====================
 function updateKPIs() {
     const vendas = JSON.parse(localStorage.getItem(STORAGE_KEYS.VENDAS)) || [];
-    
+
     let totalRecebido = 0;
     let totalFiado = 0;
     let totalPrepago = 0;
@@ -203,16 +218,18 @@ function renderClientesTable(clientes) {
         const row = document.createElement('tr');
         const tipoBadge = getClientTypeBadge(cliente.tipo);
         const acampanteText = cliente.acampante ? 'Sim' : 'Não';
+        const local = cliente.quarto || cliente.equipe || '-';
 
         const saldoExibido = cliente.tipo === 'fiado'
-            ? `- R$ ${cliente.saldo.toFixed(2)}`
-            : `R$ ${cliente.saldo.toFixed(2)}`;
+            ? `- R$ ${(cliente.saldo || 0).toFixed(2)}`
+            : `R$ ${(cliente.saldo || 0).toFixed(2)}`;
 
         row.innerHTML = `
             <td>${cliente.nome}</td>
             <td>${cliente.email || '-'}</td>
             <td>${cliente.telefone}</td>
             <td>${cliente.responsavel || '-'}</td>
+            <td>${local}</td>
             <td>${acampanteText}</td>
             <td><span class="client-type ${cliente.tipo}">${tipoBadge}</span></td>
             <td>${saldoExibido}</td>
@@ -236,6 +253,24 @@ function renderClientesTable(clientes) {
     });
 }
 
+function filterClientes() {
+    const termoNome = document.getElementById('searchClientes').value.toLowerCase();
+    const termoQuarto = document.getElementById('searchQuarto').value.toLowerCase();
+    const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
+
+    const clientesFiltrados = clientes.filter(cliente => {
+        const matchNome = cliente.nome.toLowerCase().includes(termoNome) ||
+            (cliente.email && cliente.email.toLowerCase().includes(termoNome));
+
+        const local = (cliente.quarto || cliente.equipe || '').toLowerCase();
+        const matchQuarto = local.includes(termoQuarto);
+
+        return matchNome && matchQuarto;
+    });
+
+    renderClientesTable(clientesFiltrados);
+}
+
 let clienteFiadoAtual = null;
 
 function abrirPagamentoFiado(id) {
@@ -244,8 +279,8 @@ function abrirPagamentoFiado(id) {
 
     if (!clienteFiadoAtual) return;
 
-    document.getElementById('textoSaldoFiado').innerText = 
-        `Saldo atual: R$ ${clienteFiadoAtual.saldo.toFixed(2)}`;
+    document.getElementById('textoSaldoFiado').innerText =
+        `Saldo atual: R$ ${(clienteFiadoAtual.saldo || 0).toFixed(2)}`;
 
     document.getElementById('valorPagamentoFiado').value = '';
     document.getElementById('modalPagamentoFiado').style.display = 'block';
@@ -296,6 +331,14 @@ function getClientTypeBadge(tipo) {
     return badges[tipo] || 'Normal';
 }
 
+function toggleClientFields() {
+    const isAcampante = document.getElementById('clientAcampante').checked;
+    const isEquipante = document.getElementById('clientEquipante').checked;
+
+    document.getElementById('clientQuarto').style.display = isAcampante ? 'block' : 'none';
+    document.getElementById('clientEquipe').style.display = isEquipante ? 'block' : 'none';
+}
+
 function openClientForm() {
     currentEditingClientId = null;
     document.getElementById('clientFormTitle').textContent = 'Adicionar Cliente';
@@ -303,6 +346,10 @@ function openClientForm() {
     document.getElementById('clientTelefone').value = '';
     document.getElementById('clientResponsavel').value = '';
     document.getElementById('clientAcampante').checked = false;
+    document.getElementById('clientEquipante').checked = false;
+    document.getElementById('clientQuarto').value = '';
+    document.getElementById('clientEquipe').value = '';
+    toggleClientFields();
     document.getElementById('clientTipo').value = '';
     document.getElementById('clientDeposito').value = '';
     document.getElementById('clientDeposito').style.display = 'none';
@@ -317,7 +364,7 @@ function closeClientForm() {
 function editCliente(id) {
     const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
     const cliente = clientes.find(c => c.id === id);
-    
+
     if (!cliente) {
         showNotification('error', 'Cliente não encontrado', 'Erro');
         return;
@@ -326,12 +373,16 @@ function editCliente(id) {
     currentEditingClientId = id;
     document.getElementById('clientFormTitle').textContent = 'Editar Cliente';
     document.getElementById('clientNome').value = cliente.nome;
-    
+
     document.getElementById('clientTelefone').value = cliente.telefone;
     document.getElementById('clientResponsavel').value = cliente.responsavel || '';
     document.getElementById('clientAcampante').checked = cliente.acampante || false;
+    document.getElementById('clientEquipante').checked = cliente.equipante || false;
+    document.getElementById('clientQuarto').value = cliente.quarto || '';
+    document.getElementById('clientEquipe').value = cliente.equipe || '';
+    toggleClientFields();
     document.getElementById('clientTipo').value = cliente.tipo;
-    
+
     if (cliente.tipo === 'prepago') {
         document.getElementById('clientDeposito').style.display = 'block';
         document.getElementById('clientDeposito').value = cliente.saldo;
@@ -356,42 +407,75 @@ function updateDepositoField() {
 
 function saveClient(event) {
     event.preventDefault();
-    
-    const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
-    
-    const clientData = {
-        nome: document.getElementById('clientNome').value,
-        email: document.getElementById('clientEmail').value,
-        telefone: document.getElementById('clientTelefone').value,
-        responsavel: document.getElementById('clientResponsavel').value,
-        acampante: document.getElementById('clientAcampante').checked,
-        tipo: document.getElementById('clientTipo').value,
-        saldo: document.getElementById('clientTipo').value === 'prepago' 
-            ? parseFloat(document.getElementById('clientDeposito').value) 
-            : 0
-    };
 
-    if (currentEditingClientId) {
-        const index = clientes.findIndex(c => c.id === currentEditingClientId);
-        if (index !== -1) {
-            clientes[index] = { ...clientes[index], ...clientData };
+    try {
+        const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
+
+        const nome = document.getElementById('clientNome').value;
+        if (!nome || nome.trim() === "") {
+            showNotification('error', 'O nome do cliente é obrigatório.', 'Erro de Validação');
+            return;
         }
-    } else {
-        const newClient = {
-            id: Date.now().toString(),
-            ...clientData
-        };
-        clientes.push(newClient);
-    }
 
-    localStorage.setItem(STORAGE_KEYS.CLIENTES, JSON.stringify(clientes));
-    
-    closeClientForm();
-    loadClientes();
-    loadClientsForPDV();
-    
-    const message = currentEditingClientId ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!';
-    showNotification('success', message, 'Sucesso');
+        const tipo = document.getElementById('clientTipo').value;
+        if (!tipo) {
+            showNotification('error', 'Selecione o tipo do cliente.', 'Erro de Validação');
+            return;
+        }
+
+        const isPrepago = tipo === 'prepago';
+        let saldo = 0;
+        if (isPrepago) {
+            const depositoInput = document.getElementById('clientDeposito').value;
+            if (!depositoInput) {
+                showNotification('error', 'Informe o valor do depósito inicial para clientes pré-pagos.', 'Erro de Validação');
+                return;
+            }
+            saldo = parseFloat(depositoInput);
+            if (isNaN(saldo)) {
+                showNotification('error', 'Valor do depósito inválido.', 'Erro de Validação');
+                return;
+            }
+        }
+
+        const clientData = {
+            nome: nome.trim(),
+            email: document.getElementById('clientEmail').value,
+            telefone: document.getElementById('clientTelefone').value,
+            responsavel: document.getElementById('clientResponsavel').value,
+            acampante: document.getElementById('clientAcampante').checked,
+            equipante: document.getElementById('clientEquipante').checked,
+            quarto: document.getElementById('clientQuarto').value,
+            equipe: document.getElementById('clientEquipe').value,
+            tipo: tipo,
+            saldo: saldo
+        };
+
+        if (currentEditingClientId) {
+            const index = clientes.findIndex(c => c.id === currentEditingClientId);
+            if (index !== -1) {
+                clientes[index] = { ...clientes[index], ...clientData };
+            }
+        } else {
+            const newClient = {
+                id: Date.now().toString(),
+                ...clientData
+            };
+            clientes.push(newClient);
+        }
+
+        localStorage.setItem(STORAGE_KEYS.CLIENTES, JSON.stringify(clientes));
+
+        closeClientForm();
+        loadClientes();
+        loadClientsForPDV();
+
+        const message = currentEditingClientId ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!';
+        showNotification('success', message, 'Sucesso');
+    } catch (error) {
+        console.error("Erro ao salvar cliente:", error);
+        showNotification('error', 'Erro ao salvar cliente: ' + error.message, 'Erro');
+    }
 }
 
 function deleteClienteConfirm(id) {
@@ -412,13 +496,13 @@ function deleteCliente(id) {
 function filterClientes() {
     const searchTerm = document.getElementById('searchClientes').value.toLowerCase();
     const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
-    
-    const filtered = clientes.filter(c => 
+
+    const filtered = clientes.filter(c =>
         c.nome.toLowerCase().includes(searchTerm) ||
         (c.email && c.email.toLowerCase().includes(searchTerm)) ||
         c.telefone.includes(searchTerm)
     );
-    
+
     renderClientesTable(filtered);
 }
 
@@ -484,39 +568,39 @@ function openProductForm(id = null) {
 }
 
 function exportarProdutos() {
-  const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
-  const blob = new Blob([JSON.stringify(produtos, null, 2)], { type: 'application/json' });
+    const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
+    const blob = new Blob([JSON.stringify(produtos, null, 2)], { type: 'application/json' });
 
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'produtos.json';
-  link.click();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'produtos.json';
+    link.click();
 }
 
 function importarProdutos(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const dados = JSON.parse(e.target.result);
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const dados = JSON.parse(e.target.result);
 
-      if (!Array.isArray(dados)) {
-        showNotification('error', 'Arquivo inválido', 'Erro');
-        return;
-      }
+            if (!Array.isArray(dados)) {
+                showNotification('error', 'Arquivo inválido', 'Erro');
+                return;
+            }
 
-      localStorage.setItem(STORAGE_KEYS.PRODUTOS, JSON.stringify(dados));
-      loadProdutos();
-      loadProductsForPDV();
-      showNotification('success', 'Produtos importados com sucesso!', 'Sucesso');
-    } catch {
-      showNotification('error', 'Erro ao importar arquivo', 'Erro');
-    }
-  };
+            localStorage.setItem(STORAGE_KEYS.PRODUTOS, JSON.stringify(dados));
+            loadProdutos();
+            loadProductsForPDV();
+            showNotification('success', 'Produtos importados com sucesso!', 'Sucesso');
+        } catch {
+            showNotification('error', 'Erro ao importar arquivo', 'Erro');
+        }
+    };
 
-  reader.readAsText(file);
+    reader.readAsText(file);
 }
 
 
@@ -528,7 +612,7 @@ function closeProductForm() {
 function editProduto(id) {
     const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
     const produto = produtos.find(p => p.id === id);
-    
+
     if (!produto) {
         showNotification('error', 'Produto não encontrado', 'Erro');
         return;
@@ -536,19 +620,20 @@ function editProduto(id) {
 
     currentEditingProductId = id;
     document.getElementById('productFormTitle').textContent = 'Editar Produto';
-    document.getElementById('productNome').value = produto.nome;
-    document.getElementById('productCategoria').value = produto.categoria;
-    document.getElementById('productQuantidade').value = produto.quantidade;
-    document.getElementById('productPreco').value = produto.preco;
-    document.getElementById('productEstoqueMinimo').value = produto.estoque_minimo;
+    document.getElementById('productNome').value = produto.nome || '';
+    document.getElementById('productCategoria').value = produto.categoria || '';
+    document.getElementById('productQuantidade').value = produto.quantidade || 0;
+    document.getElementById('productPreco').value = produto.preco || 0;
+    document.getElementById('productEstoqueMinimo').value = produto.estoque_minimo || 0;
     document.getElementById('productFormModal').style.display = 'flex';
 }
 
+
 function saveProduct(event) {
     event.preventDefault();
-    
+
     const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
-    
+
     const productData = {
         nome: document.getElementById('productNome').value,
         quantidade: parseInt(document.getElementById('productQuantidade').value),
@@ -570,11 +655,11 @@ function saveProduct(event) {
     }
 
     localStorage.setItem(STORAGE_KEYS.PRODUTOS, JSON.stringify(produtos));
-    
+
     closeProductForm();
     loadProdutos();
     loadProductsForPDV();
-    
+
     const message = currentEditingProductId ? 'Produto atualizado com sucesso!' : 'Produto cadastrado com sucesso!';
     showNotification('success', message, 'Sucesso');
 }
@@ -597,12 +682,12 @@ function deleteProduto(id) {
 function filterEstoque() {
     const searchTerm = document.getElementById('searchEstoque').value.toLowerCase();
     const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
-    
-    const filtered = produtos.filter(p => 
+
+    const filtered = produtos.filter(p =>
         p.nome.toLowerCase().includes(searchTerm) ||
         p.categoria.toLowerCase().includes(searchTerm)
     );
-    
+
     renderEstoqueTable(filtered);
 }
 
@@ -649,24 +734,74 @@ function loadClientsForPDV() {
     const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
     const select = document.getElementById('clientSelect');
     const currentValue = select.value;
-    
+
+    // Get Filter Elements
+    const searchInput = document.getElementById('pdvClientSearch');
+    const typeSelect = document.getElementById('pdvClientTypeFilter');
+    const roomSelect = document.getElementById('pdvRoomFilter');
+
+    // Values
+    const searchText = searchInput ? searchInput.value.toLowerCase() : '';
+    const typeFilter = typeSelect ? typeSelect.value : 'all';
+    const roomFilter = roomSelect ? roomSelect.value : 'all';
+
+    // Populate Room Filter
+    if (roomSelect) {
+        const currentRoomValue = roomSelect.value;
+        const rooms = [...new Set(clientes.map(c => c.quarto).filter(r => r && r.trim() !== ''))].sort();
+
+        // Save current options to check if update is needed (simple check)
+        // For simplicity, we'll just rebuild and restore value
+        roomSelect.innerHTML = '<option value="all">Todos os Quartos</option>';
+        rooms.forEach(room => {
+            const option = document.createElement('option');
+            option.value = room;
+            option.textContent = room;
+            roomSelect.appendChild(option);
+        });
+
+        // Restore value if it still exists, otherwise default to all
+        if (rooms.includes(currentRoomValue)) {
+            roomSelect.value = currentRoomValue;
+        } else {
+            roomSelect.value = 'all';
+        }
+    }
+
+    // Filter Clients
+    const filteredClientes = clientes.filter(cliente => {
+        const matchesSearch = cliente.nome.toLowerCase().includes(searchText);
+        const matchesType = typeFilter === 'all' || cliente.tipo === typeFilter;
+        // Logic for room filter:
+        // If 'all', match everyone.
+        // If specific room, match client.quarto === room.
+        const matchesRoom = roomFilter === 'all' || (cliente.quarto === roomFilter);
+
+        return matchesSearch && matchesType && matchesRoom;
+    });
+
     select.innerHTML = '<option value="">Venda sem cliente</option>';
-    
-    clientes.forEach(cliente => {
+
+    filteredClientes.forEach(cliente => {
         const option = document.createElement('option');
         option.value = cliente.id;
         option.textContent = cliente.nome;
         select.appendChild(option);
     });
 
-    select.value = currentValue;
+    if (currentValue && filteredClientes.find(c => c.id === currentValue)) {
+        select.value = currentValue;
+    } else {
+        select.value = '';
+        updateClientInfo();
+    }
 }
 
 function addToCart(produto) {
     const carrinho = JSON.parse(localStorage.getItem(STORAGE_KEYS.CARRINHO)) || [];
-    
+
     const itemExistente = carrinho.find(item => item.id === produto.id);
-    
+
     if (itemExistente) {
         itemExistente.quantidade += 1;
     } else {
@@ -677,7 +812,7 @@ function addToCart(produto) {
             quantidade: 1
         });
     }
-    
+
     localStorage.setItem(STORAGE_KEYS.CARRINHO, JSON.stringify(carrinho));
     loadCartUI();
 }
@@ -744,7 +879,7 @@ function removeFromCart(index) {
 function updateClientInfo() {
     const clientId = document.getElementById('clientSelect').value;
     const clientInfo = document.getElementById('clientInfo');
-    
+
     if (!clientId) {
         clientInfo.style.display = 'none';
         return;
@@ -919,7 +1054,7 @@ function getVendasByPeriod(period) {
         const vendaDate = typeof venda.data === 'number' ? new Date(venda.data) : new Date();
         const vendaDay = new Date(vendaDate.getFullYear(), vendaDate.getMonth(), vendaDate.getDate());
 
-        switch(period) {
+        switch (period) {
             case 'today':
                 return vendaDay.getTime() === today.getTime();
             case 'week':
@@ -944,7 +1079,7 @@ function updateRelatorios() {
     const period = document.getElementById('periodSelect').value;
     const vendas = getVendasByPeriod(period);
     const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
-    
+
     let totalVendas = vendas.length;
     let totalFaturamento = 0;
     let totalFiado = 0;
@@ -972,10 +1107,10 @@ function updateRelatorios() {
 
     renderProdutosVendidos(vendas);
     renderVendasTable(vendas);
-    
+
     // Gráfico de Vendas por Período
     renderChartVendas(vendas);
-    
+
     // Gráfico de Formas de Pagamento
     renderChartPagamento(totalDinheiro, totalCartao, totalFiado);
 }
@@ -1035,7 +1170,7 @@ function renderChartVendas(vendas) {
                     beginAtZero: true,
                     ticks: {
                         color: '#cbd5e1',
-                        callback: function(value) {
+                        callback: function (value) {
                             return 'R$ ' + value.toFixed(0);
                         }
                     },
@@ -1093,7 +1228,7 @@ function renderChartPagamento(dinheiro, cartao, fiado) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             const value = context.parsed;
                             const percentage = total > 0 ? (value / total * 100).toFixed(1) : 0;
                             return `R$ ${value.toFixed(2)} (${percentage}%)`;
@@ -1107,7 +1242,7 @@ function renderChartPagamento(dinheiro, cartao, fiado) {
 
 function renderProdutosVendidos(vendas) {
     const produtosMap = {};
-    
+
     vendas.forEach(venda => {
         venda.produtos.forEach(produto => {
             if (!produtosMap[produto.id]) {
@@ -1169,3 +1304,38 @@ function logout() {
     showNotification('info', 'Você saiu do sistema', 'Saída');
     // Aqui você pode redirecionar para uma página de login ou fazer outras ações
 }
+
+// Inicialização de Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Listeners para os campos condicionais do formulário de cliente
+    const acampanteCheckbox = document.getElementById('clientAcampante');
+    const equipanteCheckbox = document.getElementById('clientEquipante');
+
+    if (acampanteCheckbox) {
+        acampanteCheckbox.addEventListener('change', toggleClientFields);
+    }
+    if (equipanteCheckbox) {
+        equipanteCheckbox.addEventListener('change', toggleClientFields);
+    }
+
+    // Listeners para filtros do PDV
+    const pdvSearch = document.getElementById('pdvClientSearch');
+    const pdvType = document.getElementById('pdvClientTypeFilter');
+    const pdvRoom = document.getElementById('pdvRoomFilter');
+
+    if (pdvSearch) {
+        pdvSearch.addEventListener('input', loadClientsForPDV);
+    }
+    if (pdvType) {
+        pdvType.addEventListener('change', loadClientsForPDV);
+    }
+    if (pdvRoom) {
+        pdvRoom.addEventListener('change', loadClientsForPDV);
+    }
+
+    // Carregar dados iniciais
+    loadProdutos();
+    loadClientes();
+    loadCartUI();
+    loadClientsForPDV();
+});

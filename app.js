@@ -1241,18 +1241,19 @@ function updateRelatorios() {
     // Total Fiado = Portion that was fiado
     // Total Recebido = (Dinheiro + Cartao) -> Actual cash flow.
 
-    // Recalculating...
-    let totalPrepago = 0;
-    vendas.forEach(venda => {
-        if (venda.clienteTipo === 'prepago') {
-            totalPrepago += venda.valor;
-        }
+    // Recalculating for KPIs based on User Feedback
+    // Total Prepago = Sum of all prepago client balances (Liability)
+    const clientes = JSON.parse(localStorage.getItem(STORAGE_KEYS.CLIENTES)) || [];
+    let totalPrepagoSaldo = 0;
+    clientes.forEach(c => {
+        if (c.tipo === 'prepago') totalPrepagoSaldo += (c.saldo || 0);
     });
 
+    // Total Recebido = Cash + Card (Real Flow)
     const totalRecebido = totalDinheiro + totalCartao;
 
     document.getElementById('relFaturamento').textContent = `R$ ${totalFaturamento.toFixed(2)}`;
-    document.getElementById('relPrepago').textContent = `R$ ${totalPrepago.toFixed(2)}`;
+    document.getElementById('relPrepago').textContent = `R$ ${totalPrepagoSaldo.toFixed(2)}`;
     document.getElementById('relFiado').textContent = `R$ ${totalFiado.toFixed(2)}`;
     document.getElementById('relRecebido').textContent = `R$ ${totalRecebido.toFixed(2)}`;
 

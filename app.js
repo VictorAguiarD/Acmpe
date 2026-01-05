@@ -144,6 +144,8 @@ function showPage(pageName) {
         loadProductsForPDV();
         loadCartUI();
         loadClientsForPDV();
+    } else if (pageName === 'estoque') {
+        loadProdutos();
     } else if (pageName === 'relatorios') {
         updateRelatorios();
     }
@@ -523,22 +525,29 @@ function renderEstoqueTable(produtos) {
 
     produtos.forEach(produto => {
         const row = document.createElement('tr');
-        const valorTotal = produto.quantidade * produto.preco;
+
+        const nome = produto.nome || 'Sem Nome';
+        const categoria = produto.categoria || 'Sem Categoria';
+        const quantidade = Number(produto.quantidade || 0);
+        const preco = Number(produto.preco || 0);
+        const estoqueMinimo = Number(produto.estoque_minimo || 0);
+
+        const valorTotal = quantidade * preco;
 
         let stockAlert = '';
-        if (produto.quantidade <= produto.estoque_minimo) {
+        if (quantidade <= estoqueMinimo) {
             stockAlert = '<i class="bi bi-exclamation-triangle-fill" style="color: #ffc107; margin-left: 8px;" title="Estoque Baixo"></i>';
-            row.classList.add('low-stock-row'); // Optional: for full row styling
+            row.classList.add('low-stock-row');
         }
 
         row.innerHTML = `
-            <td>${produto.nome}</td>
-            <td>${produto.categoria}</td>
+            <td>${nome}</td>
+            <td>${categoria}</td>
             <td>
-                ${produto.quantidade}
+                ${quantidade}
                 ${stockAlert}
             </td>
-            <td>R$ ${produto.preco.toFixed(2)}</td>
+            <td>R$ ${preco.toFixed(2)}</td>
             <td>R$ ${valorTotal.toFixed(2)}</td>
             <td>
                 <button class="btn-edit" onclick="editProduto('${produto.id}')">
@@ -563,14 +572,16 @@ function openProductForm(id = null) {
         const produto = produtos.find(p => p.id === id);
 
         document.getElementById('productFormTitle').textContent = 'Editar Produto';
-        document.getElementById('productNome').value = produto.nome;
-        document.getElementById('productQuantidade').value = produto.quantidade;
-        document.getElementById('productPreco').value = produto.preco;
-        document.getElementById('productEstoqueMinimo').value = produto.estoqueMinimo;
+        document.getElementById('productNome').value = produto.nome || '';
+        document.getElementById('productCategoria').value = produto.categoria || '';
+        document.getElementById('productQuantidade').value = produto.quantidade || 0;
+        document.getElementById('productPreco').value = (produto.preco || 0).toFixed(2);
+        document.getElementById('productEstoqueMinimo').value = produto.estoque_minimo || 0;
 
     } else {
         document.getElementById('productFormTitle').textContent = 'Adicionar Produto';
         document.getElementById('productNome').value = '';
+        document.getElementById('productCategoria').value = '';
         document.getElementById('productQuantidade').value = '';
         document.getElementById('productPreco').value = '';
         document.getElementById('productEstoqueMinimo').value = '';
@@ -620,22 +631,7 @@ function closeProductForm() {
 }
 
 function editProduto(id) {
-    const produtos = JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUTOS)) || [];
-    const produto = produtos.find(p => p.id === id);
-
-    if (!produto) {
-        showNotification('error', 'Produto não encontrado', 'Erro');
-        return;
-    }
-
-    currentEditingProductId = id;
-    document.getElementById('productFormTitle').textContent = 'Editar Produto';
-    document.getElementById('productNome').value = produto.nome || '';
-    document.getElementById('productCategoria').value = produto.categoria || '';
-    document.getElementById('productQuantidade').value = produto.quantidade || 0;
-    document.getElementById('productPreco').value = produto.preco || 0;
-    document.getElementById('productEstoqueMinimo').value = produto.estoque_minimo || 0;
-    document.getElementById('productFormModal').style.display = 'flex';
+    openProductForm(id);
 }
 
 
@@ -646,9 +642,10 @@ function saveProduct(event) {
 
     const productData = {
         nome: document.getElementById('productNome').value,
-        quantidade: parseInt(document.getElementById('productQuantidade').value),
-        preco: parseFloat(document.getElementById('productPreco').value),
-        estoque_minimo: parseInt(document.getElementById('productEstoqueMinimo').value)
+        categoria: document.getElementById('productCategoria').value,
+        quantidade: parseInt(document.getElementById('productQuantidade').value) || 0,
+        preco: parseFloat(document.getElementById('productPreco').value) || 0,
+        estoque_minimo: parseInt(document.getElementById('productEstoqueMinimo').value) || 0
     };
 
     if (currentEditingProductId) {
@@ -713,13 +710,14 @@ function loadProductsForPDV() {
     }
 
     produtos.forEach(produto => {
+        const preco = Number(produto.preco || 0);
         const btn = document.createElement('button');
         btn.className = 'product-btn';
         btn.type = 'button';
         btn.innerHTML = `
             <i class="bi bi-bag-plus"></i>
-            <h4>${produto.nome}</h4>
-            <p>R$ ${produto.preco.toFixed(2)}</p>
+            <h4>${produto.nome || 'Sem Nome'}</h4>
+            <p>R$ ${preco.toFixed(2)}</p>
         `;
         btn.onclick = () => addToCart(produto);
         grid.appendChild(btn);
@@ -1267,13 +1265,7 @@ function updateRelatorios() {
     renderChartPagamento(totalDinheiro, totalCartao, totalFiado);
 }
 
-// Low Stock Alert Logic
-function renderEstoqueTable() {
-    // Re-implementing ensure we don't break existing logic
-    // But wait, renderEstoqueTable is in another part of the file. 
-    // I should edit the original renderEstoqueTable logic.
-    // This block is for updateRelatorios.
-}
+
 
 // ... existing code ...
 
